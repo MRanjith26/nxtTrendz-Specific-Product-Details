@@ -5,17 +5,17 @@ const SimilarProductItem = props => {
   const {similarDetails} = props
   const {title, brand, imageUrl, rating, price} = similarDetails
   return (
-    <li className="product-item">
+    <li className="similar-product-item">
       <img
         src={imageUrl}
         alt={`similar product ${title}`}
-        className="thumbnail"
+        className="similar-image"
       />
-      <h1 className="title">{title}</h1>
-      <p className="brand">by {brand}</p>
+      <h1 className="similar-product-title">{title}</h1>
+      <p className="similar-product-brand">by {brand}</p>
       <div className="product-details">
         <p className="price">Rs {price}/-</p>
-        <div className="rating-container">
+        <div className="similar-rating-container">
           <p className="rating">{rating}</p>
           <img
             src="https://assets.ccbp.in/frontend/react-js/star-img.png"

@@ -1,12 +1,15 @@
-// Write your code here
 import './index.css'
 import Cookies from 'js-cookie'
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
+import {BsDashSquare, BsPlusSquare} from 'react-icons/bs'
+import {Link} from 'react-router-dom'
 
+//  import Routes
 import Header from '../Header'
 import SimilarProductItem from '../SimilarProductItem'
 
+//  using constants is a best practice
 const apiStatusConstants = {
   success: 'SUCCESS',
   inProgress: 'INPROGRESS',
@@ -15,7 +18,7 @@ const apiStatusConstants = {
 
 class ProductItemDetails extends Component {
   state = {
-    specificProductData: [],
+    specificProductData: {},
     similarDetailsData: [],
     apiStatus: '',
     productCount: 1,
@@ -26,11 +29,10 @@ class ProductItemDetails extends Component {
   }
 
   getProductDetail = async () => {
+    this.setState({apiStatus: apiStatusConstants.inProgress})
     const {match} = this.props
     const {params} = match
     const {id} = params
-
-    this.setState({apiStatus: apiStatusConstants.inProgress})
 
     const jwtToken = Cookies.get('jwt_token')
     const apiUrl = `https://apis.ccbp.in/products/${id}`
@@ -64,8 +66,8 @@ class ProductItemDetails extends Component {
       }
       this.setState({
         apiStatus: apiStatusConstants.success,
-        specificProductData: updatedData,
         similarDetailsData: similarUpdatedData,
+        specificProductData: updatedData,
       })
     } else {
       this.setState({
@@ -76,16 +78,59 @@ class ProductItemDetails extends Component {
 
   //  TODO: update productCount State on + and - buttons
 
+  onIncrement = () => {
+    const {productCount} = this.state
+    if (productCount > 0) {
+      this.setState(prevState => ({productCount: prevState.productCount + 1}))
+    }
+  }
+
+  onDecrement = () => {
+    const {productCount} = this.state
+    if (productCount > 1) {
+      this.setState(prevState => ({productCount: prevState.productCount - 1}))
+    }
+  }
+
   //  TODO: render failure on button to replace path
 
   renderProductCartCard = () => {
     const {productCount} = this.state
     //  TODO: render add buttons with count and add to cart button
+    return (
+      <div className="product-count-card">
+        <div className="control-button-container">
+          <button
+            className="control-button"
+            type="button"
+            data-testid="minus"
+            aria-label="minus"
+            onClick={this.onDecrement}
+          >
+            <BsDashSquare height={50} width={50} />
+          </button>
+          <p className="count-text">{productCount}</p>
+
+          <button
+            className="control-button"
+            type="button"
+            data-testid="plus"
+            aria-label="plus"
+            onClick={this.onIncrement}
+          >
+            <BsPlusSquare height={50} width={50} />
+          </button>
+        </div>
+        <button className="toCart-button" type="button">
+          ADD TO CART
+        </button>
+      </div>
+    )
   }
 
   //  rendering specific product details
   renderSpecificProductDetails = () => {
-    const {specificProductData} = this.setState
+    const {specificProductData} = this.state
     const {
       imageUrl,
       title,
@@ -97,12 +142,12 @@ class ProductItemDetails extends Component {
       brand,
     } = specificProductData
     return (
-      <div className="product-details-card">
+      <div className="product-card">
         <img src={imageUrl} alt="product" className="avatar-image" />
-        <div className="product-details">
+        <div className="product-details-card">
           <div className="details-card">
-            <h1>{title}</h1>
-            <p>Rs {price}/-</p>
+            <h1 className="product-detail-title">{title}</h1>
+            <p className="product-detail-price">Rs {price}/-</p>
             <div className="rating-view-details">
               <div className="rating-container">
                 <p className="rating">{rating}</p>
@@ -112,11 +157,15 @@ class ProductItemDetails extends Component {
                   className="star"
                 />
               </div>
-              <p>{totalReviews} Reviews</p>
+              <p className="review-text">{totalReviews} Reviews</p>
             </div>
-            <p>{description}</p>
-            <p>Available: {availability}</p>
-            <p>Brand: {brand}</p>
+            <p className="product-description">{description}</p>
+            <p className="head-text">
+              Available: <span className="para-text">{availability}</span>
+            </p>
+            <p className="head-text">
+              Brand: <span className="para-text">{brand}</span>
+            </p>
           </div>
           <div className="product-cart-card">
             {this.renderProductCartCard()}
@@ -131,7 +180,7 @@ class ProductItemDetails extends Component {
     const {similarDetailsData} = this.state
     return (
       <>
-        <h1>Similar Products</h1>
+        <h1 className="similar-heading">Similar Products</h1>
         <ul className="similar-details-container">
           {similarDetailsData.map(eachProduct => (
             <SimilarProductItem
@@ -144,6 +193,13 @@ class ProductItemDetails extends Component {
     )
   }
 
+  renderCompleteProductDetails = () => (
+    <>
+      {this.renderSpecificProductDetails()}
+      {this.renderSimilarProductDetails()}
+    </>
+  )
+
   // Loader view
   renderLoader = () => (
     <div data-testid="loader">
@@ -154,19 +210,42 @@ class ProductItemDetails extends Component {
   // Failure view
   renderFailureView = () => (
     <div className="failure-container">
-      <img src="" alt="" className="fail-image" />
+      <img
+        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-error-view-img.png"
+        alt="failure view"
+        className="fail-image"
+      />
       <h1 className="fail-text">Product Not Found</h1>
-      <button className="back-button" type="button">
-        Continue Shopping
-      </button>
+      <Link to="/products">
+        <button className="back-button" type="button">
+          Continue Shopping
+        </button>
+      </Link>
     </div>
   )
+
+  renderResponseStatusProductsView = () => {
+    const {apiStatus} = this.state
+
+    switch (apiStatus) {
+      case apiStatusConstants.success:
+        return this.renderCompleteProductDetails()
+      case apiStatusConstants.inProgress:
+        return this.renderLoader()
+      case apiStatusConstants.failure:
+        return this.renderFailureView()
+      default:
+        return null
+    }
+  }
 
   render() {
     return (
       <>
         <Header />
-        <div className="product-details-container">um</div>
+        <div className="product-details-container">
+          {this.renderResponseStatusProductsView()}
+        </div>
       </>
     )
   }
